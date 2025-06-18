@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Certificado Elevate</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:wght@700&display=swap');
+        body {
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+            width: 1123px; /* A4 landscape width */
+            height: 794px; /* A4 landscape height */
+            margin: 0;
+            padding: 40px;
+            border: 10px solid #0056b3;
+            background-color: #f8f9fa;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: #007bff;
+            margin-bottom: 30px;
+        }
+        .congrats {
+            font-size: 24px;
+            color: #343a40;
+        }
+        .user-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 52px;
+            font-weight: 700;
+            color: #0056b3;
+            margin: 20px 0;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        .completion-text {
+            font-size: 20px;
+            color: #495057;
+            max-width: 80%;
+            line-height: 1.6;
+        }
+        .path-title {
+            font-weight: 700;
+            color: #343a40;
+        }
+        .footer {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            width: 100%;
+            padding: 0 60px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .footer-item { text-align: center; }
+        .footer-item .line {
+            border-top: 1px solid #495057;
+            width: 200px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">Elevate 🚀</div>
+    <p class="congrats">Certificamos que</p>
+    <h1 class="user-name">{{USER_NAME}}</h1>
+    <p class="completion-text">
+        concluiu com sucesso a trilha de aprendizado
+        <br>
+        <strong class="path-title">{{PATH_TITLE}}</strong>.
+    </p>
+    <div class="footer">
+        <div class="footer-item">
+            <p>Data de Emissão: {{ISSUED_DATE}}</p>
+            <div class="line"></div>
+        </div>
+        <div class="footer-item">
+            <p>Código de Validação:</p>
+            <p><strong>{{UNIQUE_CODE}}</strong></p>
+        </div>
+    </div>
+</body>
+</html>
