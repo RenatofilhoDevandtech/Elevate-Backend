@@ -1,65 +1,87 @@
 // src/controllers/aiController.js
-const OpenAI = require('openai');
+const OpenAI = require("openai");
+const Joi = require("joi"); // Biblioteca para validar dados de entrada
 
-// Inicializa o cliente da OpenAI com a chave do seu arquivo .env
-// A biblioteca automaticamente procura pela variável de ambiente OPENAI_API_KEY.
+// Inicializa o cliente da OpenAI. A chave é lida de OPENAI_API_KEY no .env
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Função principal que lida com a conversa da entrevista
-exports.handleInterviewChat = async (req, res) => {
-  // 1. Recebe o tópico e o histórico da conversa do frontend
-  const { topic, history } = req.body;
+// Define as regras para validar os dados que chegam na requisição
+const chatSchema = Joi.object({
+  topic: Joi.string().trim().min(3).max(100).required().messages({
+    "string.empty": "O tópico é obrigatório.",
+    "string.min": "O tópico deve ter pelo menos 3 caracteres.",
+    "string.max": "O tópico não pode exceder 100 caracteres.",
+    "any.required": "O tópico é obrigatório.",
+  }),
+  history: Joi.array()
+    .items(
+      Joi.object({
+        sender: Joi.string().valid("user", "bot").required(), // Quem enviou a mensagem: 'user' ou 'bot'
+        text: Joi.string().trim().min(1).required(), // O conteúdo da mensagem
+      })
+    )
+    .min(1) // O histórico deve ter pelo menos uma mensagem
+    .required()
+    .messages({
+      "array.min":
+        "O histórico da conversa é obrigatório e não pode estar vazio.",
+      "any.required": "O histórico da conversa é obrigatório.",
+    }),
+});
 
-  if (!history || history.length === 0) {
-    return res.status(400).json({ error: 'O histórico da conversa é obrigatório.' });
+// Função que processa a conversa com o Mentor IA
+exports.handleInterviewChat = async (req, res) => {
+  // Valida os dados da requisição
+  const { error: validationError, value } = chatSchema.validate(req.body);
+  if (validationError) {
+    return res.status(400).json({ error: validationError.details[0].message });
   }
 
-  // 2. O "System Prompt": A instrução mestre que define o comportamento da IA.
-  // Esta é a parte mais importante para garantir a qualidade da entrevista.
-  // Você pode ajustar este texto para mudar a personalidade e o comportamento do seu Mentor IA.
-  const systemPrompt = `
-    Você é o "Mentor IA", um entrevistador especialista em tecnologia para a plataforma educacional "Elevate".
-    Sua personalidade é encorajadora, profissional e direta.
-    Seu objetivo é ajudar o usuário a praticar para entrevistas.
-    O foco principal da entrevista neste momento é sobre: ${topic || 'conhecimentos gerais de tecnologia'}.
+  const { topic, history } = value; // Pega o tópico e o histórico de mensagens
 
-    REGRAS IMPORTANTES:
-    1. Faça uma pergunta por vez. Suas perguntas devem ser abertas e projetadas para avaliar o conhecimento técnico ou comportamental do usuário.
-    2. NUNCA dê a resposta para a sua própria pergunta. Seu papel é questionar e avaliar, não ensinar a resposta.
-    3. Mantenha suas respostas e perguntas concisas e diretas, como um entrevistador real faria.
-    4. Use o histórico da conversa para fazer perguntas de acompanhamento relevantes e evitar repetições.
-    5. Se a resposta do usuário for muito curta, peça para ele elaborar (ex: "Interessante. Poderia me dar um exemplo prático disso?").
-    6. Se o usuário pedir feedback sobre uma resposta, forneça uma crítica construtiva e sucinta, apontando um ponto forte e uma área para melhoria.
+  // Define o papel e as regras do Mentor IA
+  const systemPrompt = `
+    Você é o "Mentor IA", um entrevistador profissional de tecnologia da plataforma "Elevate".
+    Seu objetivo é ajudar o usuário a praticar para entrevistas, focando em: ${topic}.
+    
+    Regras:
+    1. Faça uma pergunta por vez. Perguntas abertas para avaliar conhecimento ou comportamento.
+    2. NUNCA dê a resposta. Apenas questione e avalie.
+    3. Seja conciso e direto, como um entrevistador real.
+    4. Use o histórico para fazer perguntas de acompanhamento e evitar repetições.
+    5. Se a resposta do usuário for curta, peça para ele elaborar (ex: "Poderia dar um exemplo?").
+    6. Se o usuário pedir feedback, critique construtivamente (ponto forte e área para melhoria).
+    7. Comece com uma pergunta introdutória sobre o tópico.
   `;
 
   try {
-    // 3. Mapeamos o histórico do frontend para o formato que a API da OpenAI espera
-    const messagesForAPI = history.map(msg => ({
-      role: msg.sender === 'bot' ? 'assistant' : 'user',
+    // Converte o histórico de mensagens para o formato da API da OpenAI
+    const messagesForAPI = history.map((msg) => ({
+      role: msg.sender === "bot" ? "assistant" : "user", // 'bot' do frontend vira 'assistant' na OpenAI
       content: msg.text,
     }));
 
-    // 4. Criamos a chamada para a API de Chat
+    // Chama a API de Chat Completion da OpenAI para obter a resposta do Mentor IA
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // Um modelo rápido e com ótimo custo-benefício
+      model: "gpt-3.5-turbo", // Modelo da IA
       messages: [
-        { role: "system", content: systemPrompt }, // A instrução mestre vai primeiro
-        ...messagesForAPI, // Depois todo o histórico da conversa para dar contexto
+        { role: "system", content: systemPrompt }, // A instrução principal da IA
+        ...messagesForAPI, // O histórico da conversa
       ],
-      temperature: 0.7, // Controla a "criatividade". 0.7 é um bom equilíbrio.
-      max_tokens: 150,  // Limita o tamanho da resposta para ser concisa
+      temperature: 0.7, // Controla a "criatividade" da IA (0.0 a 1.0)
+      max_tokens: 150, // Limita o tamanho da resposta da IA
     });
 
-    // 5. Extraímos a resposta de texto da IA
+    // Extrai e envia a resposta da IA de volta para o frontend
     const botResponse = completion.choices[0].message.content.trim();
-
-    // 6. Enviamos a resposta de volta para o frontend
     res.status(200).json({ response: botResponse });
-
   } catch (error) {
-    console.error('Erro na API da OpenAI:', error);
-    res.status(500).json({ error: 'Não foi possível obter uma resposta da IA.' });
+    console.error("Erro na API da OpenAI:", error); // Loga o erro completo para depuração no servidor
+    res.status(500).json({
+      error: "Não foi possível obter uma resposta da IA.",
+      details: error.response?.data?.error?.message || error.message, // Detalhes do erro para depuração
+    });
   }
 };
