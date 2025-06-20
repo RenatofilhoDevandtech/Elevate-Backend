@@ -1,95 +1,154 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Certificado Elevate</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:wght@700&display=swap');
-        body {
-            box-sizing: border-box;
-            font-family: 'Montserrat', sans-serif;
-            width: 1123px; /* A4 landscape width */
-            height: 794px; /* A4 landscape height */
-            margin: 0;
-            padding: 40px;
-            border: 10px solid #0056b3;
-            background-color: #f8f9fa;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        .logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 36px;
-            font-weight: 700;
-            color: #007bff;
-            margin-bottom: 30px;
-        }
-        .congrats {
-            font-size: 24px;
-            color: #343a40;
-        }
-        .user-name {
-            font-family: 'Playfair Display', serif;
-            font-size: 52px;
-            font-weight: 700;
-            color: #0056b3;
-            margin: 20px 0;
-            border-bottom: 2px solid #dee2e6;
-            padding-bottom: 10px;
-        }
-        .completion-text {
-            font-size: 20px;
-            color: #495057;
-            max-width: 80%;
-            line-height: 1.6;
-        }
-        .path-title {
-            font-weight: 700;
-            color: #343a40;
-        }
-        .footer {
-            position: absolute;
-            bottom: 40px;
-            left: 0;
-            width: 100%;
-            padding: 0 60px;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            color: #6c757d;
-        }
-        .footer-item { text-align: center; }
-        .footer-item .line {
-            border-top: 1px solid #495057;
-            width: 200px;
-            margin-top: 5px;
-        }
+      /* Importe as fontes do Google Fonts. O Puppeteer vai baixá-las. */
+      @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:wght@700&display=swap");
+
+      body {
+        box-sizing: border-box; /* Garante que padding e borda sejam incluídos na largura/altura */
+        font-family: "Montserrat", sans-serif;
+        width: 1123px; /* Largura A4 paisagem (297mm convertidos para px em 96 DPI) */
+        height: 794px; /* Altura A4 paisagem (210mm convertidos para px em 96 DPI) */
+        margin: 0;
+        padding: 40px; /* Padding interno */
+        border: 10px solid #0056b3; /* Borda externa principal */
+        background-color: #f8f9fa; /* Cor de fundo leve */
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Centraliza verticalmente */
+        align-items: center; /* Centraliza horizontalmente */
+        text-align: center;
+        overflow: hidden; /* Evita barras de rolagem no PDF */
+      }
+      .logo {
+        /* Estilo para o logo de texto, se não usar imagem */
+        font-family: "Playfair Display", serif;
+        font-size: 36px;
+        font-weight: 700;
+        color: #007bff;
+        margin-bottom: 30px;
+      }
+      .logo-img {
+        /* Estilo para o logo de imagem (use se passar via base64) */
+        width: 180px; /* Ajuste o tamanho conforme seu logo */
+        height: auto;
+        margin-bottom: 20px;
+      }
+      .congrats {
+        font-size: 24px;
+        color: #343a40; /* Texto escuro para contraste */
+        margin-bottom: 10px;
+      }
+      .user-name {
+        font-family: "Playfair Display", serif;
+        font-size: 52px;
+        font-weight: 700;
+        color: #0056b3; /* Azul da marca */
+        margin: 20px 0;
+        border-bottom: 2px solid #dee2e6; /* Linha sutil abaixo do nome */
+        padding-bottom: 10px;
+        width: 70%; /* Ajuste a largura da linha de baixo */
+        max-width: 600px;
+        white-space: nowrap; /* Evita que o nome quebre a linha */
+        overflow: hidden; /* Oculta partes se for muito longo */
+        text-overflow: ellipsis; /* Adiciona '...' se o nome for cortado */
+      }
+      .completion-text {
+        font-size: 20px;
+        color: #495057; /* Cinza escuro para o texto */
+        max-width: 80%;
+        line-height: 1.6;
+        margin-bottom: 30px;
+      }
+      .path-title {
+        font-weight: 700;
+        color: #343a40;
+      }
+      .footer {
+        position: absolute;
+        bottom: 40px;
+        left: 0;
+        width: 100%;
+        padding: 0 60px;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: space-between; /* Espaça os itens */
+        align-items: flex-end; /* Alinha os itens na parte inferior */
+        font-size: 12px;
+        color: #6c757d; /* Cor de texto do rodapé */
+      }
+      .footer-item {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0 10px; /* Padding para espaçar itens do rodapé */
+      }
+      .footer-item .line {
+        border-top: 1px solid #495057;
+        width: 200px; /* Largura da linha da assinatura */
+        margin-top: 5px;
+        margin-bottom: 5px;
+      }
+      .signature-img {
+        /* Estilo para a imagem de assinatura (use se passar via base64) */
+        width: 150px; /* Ajuste o tamanho */
+        height: auto;
+        display: block;
+        margin: 0 auto;
+      }
+      .verification-link {
+        font-size: 10px; /* Fonte menor para o link de verificação */
+        margin-top: 5px;
+        color: #007bff; /* Cor do link */
+        text-decoration: none; /* Remover sublinhado */
+        word-wrap: break-word; /* Quebra palavras longas */
+      }
     </style>
-</head>
-<body>
-    <div class="logo">Elevate 🚀</div>
+  </head>
+  <body>
+    <img
+      src="data:image/png;base64,{{ELEVATE_LOGO_BASE64}}"
+      alt="Logo Elevate"
+      class="logo-img"
+    />
+
     <p class="congrats">Certificamos que</p>
     <h1 class="user-name">{{USER_NAME}}</h1>
     <p class="completion-text">
-        concluiu com sucesso a trilha de aprendizado
-        <br>
-        <strong class="path-title">{{PATH_TITLE}}</strong>.
+      concluiu com sucesso a trilha de aprendizado
+      <br />
+      <strong class="path-title">{{PATH_TITLE}}</strong>.
     </p>
     <div class="footer">
-        <div class="footer-item">
-            <p>Data de Emissão: {{ISSUED_DATE}}</p>
-            <div class="line"></div>
-        </div>
-        <div class="footer-item">
-            <p>Código de Validação:</p>
-            <p><strong>{{UNIQUE_CODE}}</strong></p>
-        </div>
+      <div class="footer-item">
+        <p>Data de Emissão: {{ISSUED_DATE}}</p>
+        <div class="line"></div>
+        <p>Direção Elevate</p>
+      </div>
+      <div class="footer-item">
+        <p>Código de Validação:</p>
+        <p><strong>{{UNIQUE_CODE}}</strong></p>
+        <p class="verification-link">
+          Verifique em: <br />
+          <a href="{{VERIFY_URL}}" style="color: inherit"
+            >{{VERIFY_URL_DISPLAY}}</a
+          >
+        </p>
+      </div>
+      <div class="footer-item">
+        <div class="line"></div>
+        <img
+          src="data:image/png;base64,{{SIGNATURE_IMAGE_BASE64}}"
+          alt="Assinatura Diretor"
+          class="signature-img"
+        />
+        <p>Assinatura do Diretor</p>
+      </div>
     </div>
-</body>
+  </body>
 </html>
